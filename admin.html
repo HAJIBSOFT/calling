@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>شاشة التحكم والمناداة</title>
+  <title>شاشة المناداة</title>
   <link rel="stylesheet" href="style.css">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
@@ -30,7 +30,7 @@
   <div class="admin-container">
     
     <div style="display: flex; justify-content: space-between; align-items: center;">
-      <h2 style="font-size: 1.3rem; font-weight: 800;">لوحة مناداة المراجعين</h2>
+      <h2 style="font-size: 1.3rem; font-weight: 800;"> مناداة المتقدمين</h2>
       <div style="display: flex; gap: 0.75rem;">
         <a href="plan-b.html" style="font-size: 0.85rem; color: #059669; text-decoration: none; font-weight: 700; background: #ecfdf5; padding: 0.4rem 0.8rem; border-radius: 8px;">جدول الطوارئ (Plan B) 📋</a>
         <a href="index.html" style="font-size: 0.85rem; color: var(--primary); text-decoration: none; font-weight: 700; background: var(--primary-light); padding: 0.4rem 0.8rem; border-radius: 8px;">صفحة الزائر ↗</a>
@@ -41,7 +41,7 @@
     <div class="ticket-card">
       <span class="ticket-tag">المراجع الحالي قيد المقابلة</span>
       <div class="visitor-huge-number" id="adminServingTicket">--</div>
-      <h3 id="adminServingName" style="color: var(--text-muted); font-size: 1.2rem; margin-bottom: 1.5rem;">لا يوجد مراجع حالياً</h3>
+      <h3 id="adminServingName" style="color: var(--text-muted); font-size: 1.2rem; margin-bottom: 1.5rem;">لا يوجد شخص حالياً</h3>
 
       <button id="callNextBtn" class="btn-submit" style="max-width: 280px;">
         مناداة الزائر التالي ❯
@@ -50,7 +50,7 @@
 
     <!-- جدول المراجعين المتزامن فوراً -->
     <div class="form-card" style="padding: 1.25rem;">
-      <h3 style="font-size: 1.1rem; margin-bottom: 0.5rem;">قائمة الزوار اليوم</h3>
+      <h3 style="font-size: 1.1rem; margin-bottom: 0.5rem;">قائمة المتقدمين اليوم</h3>
       <div style="overflow-x: auto; width: 100%;">
         <table>
           <thead>
@@ -92,7 +92,7 @@
           document.getElementById("adminServingName").innerText = `${current[0].name} (${current[0].phone})`;
         } else {
           document.getElementById("adminServingTicket").innerText = "--";
-          document.getElementById("adminServingName").innerText = "لا يوجد مراجع حالياً";
+          document.getElementById("adminServingName").innerText = "لا يوجد شخص حالياً";
         }
 
         // 2. تحديث جدول الزوار
