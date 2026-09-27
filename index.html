@@ -3,14 +3,16 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>HAJIB SOFT </title>
+  <title>تذكرتك الذكية</title>
   <link rel="stylesheet" href="style.css">
+  <!-- مكتبة Supabase الرسمية -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body class="secure-mode">
 
   <div class="app-container">
     
-    <!-- 1. الشريط العلوي: الرقم الحالي المنادى عليه بخط أصغر وأنيق -->
+    <!-- الشريط العلوي: الرقم الحالي المنادى عليه -->
     <div class="current-serving-bar">
       <div class="current-label">
         <span class="pulse-dot"></span>
@@ -19,20 +21,19 @@
       <div class="current-number-badge" id="topCurrentNumber">--</div>
     </div>
 
-    <!-- تنبيه صوتي ومرئي عند وصول الدور -->
+    <!-- تنبيه مرئي وصوتي فوري عند وصول الدور -->
     <div id="turnAlert" class="turn-alert-banner">
-      🔔 حان دورك الآن!,توجة الى غرفة المقابلة بكل هدوء
+      🔔 حان دورك الآن! يرجى التوجه لغرفة المقابلة فوراً
     </div>
 
-    <!-- 2. بطاقة تسجيل البيانات (الاسم ثم الجوال) -->
+    <!-- بطاقة التسجيل (الاسم ثم الجوال) -->
     <div class="form-card" id="formSection">
       <h2 style="font-size: 1.35rem; margin-bottom: 0.35rem; font-weight: 700;">تسجيل حضور موعد</h2>
       <p style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 1.5rem;">أدخل البيانات لإصدار رقم الانتظار الخاص بك</p>
-       <p style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 1.5rem;">يشترط ان تكون هويتك سارية للدخول للمقابلة </p>
 
       <form id="checkinForm">
         <div class="field-group">
-          <label for="visitorName">الاسم الثلاثي</label>
+          <label for="visitorName">الاسم الكامل</label>
           <input type="text" id="visitorName" class="mobile-input" placeholder="اكتب اسمك هنا" required autocomplete="off">
         </div>
 
@@ -45,11 +46,9 @@
       </form>
     </div>
 
-    <!-- 3. بطاقة التذكرة بعد التسجيل (رقم الزائر يظهر بحجم ضخم في المنتصف) -->
+    <!-- بطاقة التذكرة الرقمية: تظهر التذكرة في المنتصف برقم ضخم جداً -->
     <div class="ticket-card" id="ticketSection" style="display: none;">
-      <span class="ticket-tag">رقمك هو</span>
-      
-      <!-- الرقم الضخم جداً -->
+      <span class="ticket-tag">رقم الدخول الخاص بك</span>
       <div class="visitor-huge-number" id="myTicketNumber">--</div>
       
       <div class="visitor-info-box">
@@ -61,7 +60,7 @@
 
   </div>
 
-  <!-- حاجز انتهاء المقابلة وحظر الشاشة -->
+  <!-- قفل الشاشة بعد دقيقتين لمنع تصوير الشاشة -->
   <div id="lockScreen" class="lock-screen">
     <div style="font-size: 4rem; margin-bottom: 0.5rem;">⏳</div>
     <h2 style="font-size: 1.6rem; color: #dc2626; margin-bottom: 0.5rem;">انتهت مقابلتك</h2>
@@ -73,12 +72,12 @@
   <script>
     applySecurityMeasures();
 
-    // مفتاح الحفظ الموحد
+    // تهيئة اتصال Supabase
+    const db = supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY);
     const STORAGE_KEY = "kiosk_visitor_state";
     let isAlertTriggered = false;
-    let interviewCalledTimestamp = null;
 
-    // دالة استرجاع بيانات الزائر (من localStorage أولاً ثم Cookies)
+    // استرجاع الجلسة المحفوظة مسبقاً (حتى لا يتغير الرقم عند تحديث الصفحة)
     function loadSavedSession() {
       const localData = localStorage.getItem(STORAGE_KEY);
       if (localData) {
@@ -87,15 +86,12 @@
       return getCookie(STORAGE_KEY);
     }
 
-    // دالة حفظ بيانات الزائر بشكل متزامن
     function saveSession(data) {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
       setCookie(STORAGE_KEY, data, 1);
     }
 
     let currentVisitor = loadSavedSession();
-
-    // إذا كان مسجلاً مسبقاً، تظهر تذكرته فوراً دون إظهار النموذج
     if (currentVisitor) {
       renderTicketUI(currentVisitor.ticket, currentVisitor.name, currentVisitor.phone);
     }
@@ -108,7 +104,7 @@
       document.getElementById("displayPhone").innerText = phone;
     }
 
-    // معالجة نموذج التسجيل
+    // تسجيل زائر جديد وحفظه فورياً
     document.getElementById("checkinForm").addEventListener("submit", async (e) => {
       e.preventDefault();
       const btn = document.getElementById("submitBtn");
@@ -116,75 +112,73 @@
       const phone = document.getElementById("visitorPhone").value.trim();
 
       btn.disabled = true;
-      btn.innerText = "جاري الإصدار...";
+      btn.innerText = "جاري الإصدار الفوري...";
 
       try {
-        const res = await fetch(CONFIG.API_URL, {
-          method: "POST",
-          body: JSON.stringify({ action: "register", name: name, phone: phone })
-        });
-        const result = await res.json();
+        const { data, error } = await db
+          .from('visitors')
+          .insert([{ name: name, phone: phone, status: 'waiting' }])
+          .select()
+          .single();
 
-        if (result.status === "success") {
-          currentVisitor = { ticket: result.ticket, name: result.name, phone: result.phone };
-          saveSession(currentVisitor);
-          renderTicketUI(result.ticket, result.name, result.phone);
-        }
+        if (error) throw error;
+
+        currentVisitor = { ticket: data.ticket_number, name: data.name, phone: data.phone, id: data.id };
+        saveSession(currentVisitor);
+        renderTicketUI(currentVisitor.ticket, currentVisitor.name, currentVisitor.phone);
       } catch (err) {
-        alert("تعذر الاتصال بقاعدة البيانات. تحقق من اتصال الإنترنت.");
+        alert("حدث خطأ أثناء إصدار الرقم: " + err.message);
       } finally {
         btn.disabled = false;
         btn.innerText = "استلام رقم الموعد";
       }
     });
 
-    // تحديث الرقم الحالي في الأعلى وفحص الدور تلقائياً
-    async function syncQueue() {
+    // جلب الرقم الحالي وفحص حالة الموعد
+    async function checkCurrentServing() {
       try {
-        const res = await fetch(`${CONFIG.API_URL}?action=getStatus`);
-        const data = await res.json();
+        const { data, error } = await db
+          .from('visitors')
+          .select('*')
+          .eq('status', 'calling')
+          .order('called_at', { ascending: false })
+          .limit(1);
 
-        if (data.status === "success") {
-          const current = data.currentServing;
-          const currentNum = current ? current.ticket : "--";
-          
-          // عرض الرقم الحالي في الشريط العلوي بخط أصغر
-          document.getElementById("topCurrentNumber").innerText = `#${currentNum}`;
+        if (!error && data && data.length > 0) {
+          const current = data[0];
+          document.getElementById("topCurrentNumber").innerText = `#${current.ticket_number}`;
 
-          // التحقق إذا حان دور الزائر الحالي
-          if (currentVisitor && current && String(current.ticket) === String(currentVisitor.ticket)) {
+          if (currentVisitor && String(current.ticket_number) === String(currentVisitor.ticket)) {
             if (!isAlertTriggered) {
               isAlertTriggered = true;
               playNotificationSound();
               document.getElementById("turnAlert").style.display = "block";
-              interviewCalledTimestamp = Date.now();
             }
 
-            // فحص مهلة الدقيقتين (120,000ms)
-            if (interviewCalledTimestamp && (Date.now() - interviewCalledTimestamp >= CONFIG.INTERVIEW_TIMEOUT_MS)) {
+            // فحص انتهاء مدة المقابلة (دقيقتين)
+            const calledAt = new Date(current.called_at).getTime();
+            if (Date.now() - calledAt >= CONFIG.INTERVIEW_TIMEOUT_MS) {
               document.getElementById("lockScreen").style.display = "flex";
               document.body.classList.add("blurred");
             }
           }
+        } else {
+          document.getElementById("topCurrentNumber").innerText = "--";
         }
-      } catch (err) {
-        console.warn("جاري إعادة محاولة المزامنة...");
+      } catch (e) {
+        console.warn("تنبيه الاتصال:", e);
       }
     }
 
-    
-  //  setInterval(syncQueue, CONFIG.POLL_INTERVAL);
-    
-    // ✅ يبقى هذا فقط (يقرأ البيانات مرة واحدة عند فتح الصفحة):
-checkCurrentServing();
-
-// ✅ وهذا الكود هو البديل الذكي المجاني (لا يستهلك أي طلبات إلا إذا ضغط الموظف على التالي):
-db.channel('public:visitors')
-  .on('postgres_changes', { event: '*', schema: 'public', table: 'visitors' }, () => {
+    // 1. قراءة لمرة واحدة فقط عند تشغيل الصفحة
     checkCurrentServing();
-  })
-  .subscribe();
-    
+
+    // 2. تحديث فوري بالـ WebSockets (بدون أي استهلاك للطلبات ولا تكرار polling)
+    db.channel('public:visitors')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'visitors' }, () => {
+        checkCurrentServing();
+      })
+      .subscribe();
   </script>
 </body>
 </html>

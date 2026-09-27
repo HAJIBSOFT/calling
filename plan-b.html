@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>خطة الطوارئ - سجل المسجلين (Plan B)</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    .planb-container {
+      width: 95%;
+      max-width: 900px;
+      margin: 1.5rem auto;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      gap: 0.75rem;
+      align-items: center;
+      background: #ffffff;
+      padding: 1rem;
+      border-radius: 16px;
+      border: 1px solid var(--border);
+    }
+    .action-btn {
+      padding: 0.6rem 1.2rem;
+      border-radius: 10px;
+      font-weight: 700;
+      border: none;
+      cursor: pointer;
+      font-size: 0.9rem;
+    }
+    .btn-print { background: #0f172a; color: white; }
+    .btn-export { background: #059669; color: white; }
+    table { width: 100%; border-collapse: collapse; margin-top: 0.5rem; text-align: right; }
+    th, td { padding: 1rem 0.8rem; border-bottom: 1px solid var(--border); }
+    th { background: #f8fafc; font-weight: 700; color: var(--text-muted); }
+    
+    @media print {
+      .toolbar, .nav-links { display: none !important; }
+      body { background: white !important; }
+      .form-card { border: none !important; box-shadow: none !important; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="planb-container">
+    
+    <div class="nav-links" style="display: flex; justify-content: space-between; align-items: center;">
+      <h2 style="font-weight: 800; font-size: 1.4rem;">📋 سجل الحضور الكامل (Plan B)</h2>
+      <a href="admin.html" style="color: var(--primary); text-decoration: none; font-weight: 700;">لوحة المناداة ↗</a>
+    </div>
+
+    <!-- شريط الأدوات: بحث، طباعة، تصدير -->
+    <div class="toolbar">
+      <input type="text" id="searchInput" class="mobile-input" style="max-width: 320px; height: 44px;" placeholder="ابحث بالاسم أو رقم الجوال...">
+      <div style="display: flex; gap: 0.5rem;">
+        <button onclick="window.print()" class="action-btn btn-print">🖨️ طباعة الكشف</button>
+        <button onclick="exportCSV()" class="action-btn btn-export">📥 تصدير Excel (CSV)</button>
+      </div>
+    </div>
+
+    <!-- جدول السجل -->
+    <div class="form-card" style="padding: 1rem;">
+      <div style="overflow-x: auto;">
+        <table>
+          <thead>
+            <tr>
+              <th>رقم التذكرة</th>
+              <th>الاسم الكامل</th>
+              <th>رقم الجوال</th>
+              <th>وقت التسجيل</th>
+              <th>الحالة</th>
+            </tr>
+          </thead>
+          <tbody id="backupList">
+            <tr>
+              <td colspan="5" style="text-align: center; color: var(--text-muted);">جاري تحميل السجل...</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+
+  <script src="config.js"></script>
+  <script>
+    const db = supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY);
+    let allVisitors = [];
+
+    async function loadBackupData() {
+      const { data, error } = await db
+        .from('visitors')
+        .select('*')
+        .order('ticket_number', { ascending: true });
+
+      if (!error && data) {
+        allVisitors = data;
+        renderTable(allVisitors);
+      }
+    }
+
+    function renderTable(list) {
+      const tbody = document.getElementById("backupList");
+      tbody.innerHTML = "";
+
+      if (list.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;">لا توجد أي بيانات مطابقة</td></tr>`;
+        return;
+      }
+
+      list.forEach(v => {
+        const time = new Date(v.created_at).toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' });
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td><strong style="color: var(--primary);">#${v.ticket_number}</strong></td>
+          <td style="font-weight: 600;">${v.name}</td>
+          <td style="font-family: monospace;">${v.phone}</td>
+          <td>${time}</td>
+          <td><strong>${v.status === 'calling' ? 'قيد المقابلة' : v.status === 'completed' ? 'منتهي' : 'في الانتظار'}</strong></td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    // تصفية فورية أثناء الكتابة
+    document.getElementById("searchInput").addEventListener("input", (e) => {
+      const q = e.target.value.toLowerCase().trim();
+      const filtered = allVisitors.filter(v => 
+        v.name.toLowerCase().includes(q) || v.phone.includes(q) || String(v.ticket_number).includes(q)
+      );
+      renderTable(filtered);
+    });
+
+    // تصدير البيانات إلى ملف CSV
+    function exportCSV() {
+      if (allVisitors.length === 0) return alert("لا توجد بيانات لتصديرها");
+      let csv = "\uFEFFالرقم,الاسم,رقم الجوال,الحالة\n";
+      allVisitors.forEach(v => {
+        csv += `"${v.ticket_number}","${v.name}","${v.phone}","${v.status}"\n`;
+      });
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.download = `سجل_الزوار_${new Date().toISOString().slice(0,10)}.csv`;
+      link.click();
+    }
+
+    loadBackupData();
+
+    // تحديث فوري إذا سجل أي زائر جديد
+    db.channel('public:planb')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'visitors' }, () => {
+        loadBackupData();
+      })
+      .subscribe();
+  </script>
+</body>
+</html>
