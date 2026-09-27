@@ -1,0 +1,239 @@
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700;800&display=swap');
+
+:root {
+  --primary: #2563eb;
+  --primary-light: #eff6ff;
+  --primary-border: #bfdbfe;
+  --success: #059669;
+  --success-bg: #ecfdf5;
+  --success-border: #a7f3d0;
+  --bg-page: #f8fafc;
+  --card-bg: #ffffff;
+  --text-main: #0f172a;
+  --text-muted: #64748b;
+  --border: #e2e8f0;
+  --shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.05), 0 8px 10px -6px rgba(15, 23, 42, 0.02);
+}
+
+/* منع أي تحرك أفقي نهائياً وتخصيص تجربة اللمس للموبايل */
+html, body {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+  margin: 0;
+  padding: 0;
+  background-color: var(--bg-page);
+  color: var(--text-main);
+  font-family: 'IBM Plex Sans Arabic', -apple-system, sans-serif;
+  direction: rtl;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: pan-y;
+}
+
+* {
+  box-sizing: border-box;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* حاوية الصفحة المخصصة للهواتف */
+.app-container {
+  width: 100%;
+  max-width: 480px; /* مقاس مثالي للأجهزة المحمولة */
+  margin: 0 auto;
+  min-height: 100vh;
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+/* بطاقة الرقم الحالي في الأعلى (أنيقة ومختصرة) */
+.current-serving-bar {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  padding: 0.85rem 1.25rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+}
+
+.current-label {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.pulse-dot {
+  width: 9px;
+  height: 9px;
+  background-color: var(--success);
+  border-radius: 50%;
+  box-shadow: 0 0 0 0 rgba(5, 150, 105, 0.6);
+  animation: pulseGreen 1.8s infinite;
+}
+
+@keyframes pulseGreen {
+  0% { transform: scale(0.9); box-shadow: 0 0 0 0 rgba(5, 150, 105, 0.6); }
+  70% { transform: scale(1.1); box-shadow: 0 0 0 7px rgba(5, 150, 105, 0); }
+  100% { transform: scale(0.9); box-shadow: 0 0 0 0 rgba(5, 150, 105, 0); }
+}
+
+.current-number-badge {
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: var(--success);
+  background: var(--success-bg);
+  border: 1px solid var(--success-border);
+  padding: 0.2rem 0.9rem;
+  border-radius: 12px;
+}
+
+/* بطاقة التذكرة الأساسية */
+.ticket-card {
+  background: var(--card-bg);
+  border-radius: 28px;
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow);
+  padding: 2.25rem 1.5rem;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+}
+
+/* رقم الزائر الضخم في المنتصف */
+.visitor-huge-number {
+  font-size: clamp(5.5rem, 24vw, 8rem);
+  font-weight: 800;
+  color: var(--primary);
+  line-height: 0.95;
+  margin: 1.25rem 0 0.75rem 0;
+  letter-spacing: -2px;
+}
+
+.ticket-tag {
+  background: var(--primary-light);
+  color: var(--primary);
+  border: 1px solid var(--primary-border);
+  font-weight: 700;
+  font-size: 0.85rem;
+  padding: 0.35rem 1rem;
+  border-radius: 50px;
+}
+
+.visitor-info-box {
+  margin-top: 1rem;
+  width: 100%;
+  border-top: 1px dashed var(--border);
+  padding-top: 1rem;
+}
+
+/* حقول الإدخال */
+.form-card {
+  background: var(--card-bg);
+  border-radius: 24px;
+  border: 1px solid var(--border);
+  padding: 1.75rem 1.25rem;
+  box-shadow: var(--shadow);
+}
+
+.field-group {
+  margin-bottom: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.field-group label {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-main);
+}
+
+.mobile-input {
+  width: 100%;
+  height: 52px;
+  padding: 0 1rem;
+  font-size: 1.05rem;
+  background: #fbfcfd;
+  border: 1.5px solid var(--border);
+  border-radius: 14px;
+  color: var(--text-main);
+  outline: none;
+  transition: all 0.2s ease;
+}
+
+.mobile-input:focus {
+  border-color: var(--primary);
+  background: #ffffff;
+  box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1);
+}
+
+.btn-submit {
+  width: 100%;
+  height: 54px;
+  background: var(--primary);
+  color: #ffffff;
+  border: none;
+  border-radius: 14px;
+  font-size: 1.1rem;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 6px 15px -3px rgba(37, 99, 235, 0.35);
+  transition: transform 0.15s, background-color 0.15s;
+}
+
+.btn-submit:active {
+  transform: scale(0.98);
+}
+
+/* شريط التنبيه عند وصول الدور */
+.turn-alert-banner {
+  display: none;
+  background: var(--success);
+  color: white;
+  padding: 1rem;
+  border-radius: 16px;
+  text-align: center;
+  font-weight: 700;
+  font-size: 1.05rem;
+  animation: bounce 0.6s infinite alternate;
+}
+
+@keyframes bounce {
+  from { transform: translateY(0); }
+  to { transform: translateY(-4px); }
+}
+
+/* شاشة حظر اللقطات وانتهاء الوقت */
+.secure-mode {
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.blurred {
+  filter: blur(20px) grayscale(80%);
+}
+
+.lock-screen {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(255, 255, 255, 0.97);
+  z-index: 9999;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  padding: 2rem;
+}
+
+@media print {
+  body { display: none !important; }
+}

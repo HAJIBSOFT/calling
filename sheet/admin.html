@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>شاشة المناداة للموظف</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    .admin-container {
+      width: 100%;
+      max-width: 700px;
+      margin: 0 auto;
+      padding: 1.25rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 1rem;
+      text-align: right;
+    }
+    th, td {
+      padding: 0.75rem;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.9rem;
+    }
+    th {
+      background: #f1f5f9;
+      color: var(--text-muted);
+    }
+    .badge {
+      padding: 0.25rem 0.6rem;
+      border-radius: 8px;
+      font-size: 0.75rem;
+      font-weight: 700;
+    }
+    .badge-waiting { background: #fef3c7; color: #d97706; }
+    .badge-calling { background: #d1fae5; color: #059669; }
+    .badge-completed { background: #f1f5f9; color: #64748b; }
+  </style>
+</head>
+<body>
+
+  <div class="admin-container">
+    
+    <!-- زر تبديل أو معاينة شاشة الزائر -->
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+      <h2 style="font-size: 1.25rem; font-weight: 800;">لوحة استدعاء المراجعين</h2>
+      <a href="index.html" style="font-size: 0.85rem; color: var(--primary); text-decoration: none; font-weight: 600;">صفحة الزائر ↗</a>
+    </div>
+
+    <!-- بطاقة المناداة للزائر التالي -->
+    <div class="ticket-card">
+      <span class="ticket-tag">المراجع الحالي قيد المقابلة</span>
+      <div class="visitor-huge-number" id="adminServingTicket">--</div>
+      <h3 id="adminServingName" style="color: var(--text-muted); font-size: 1.2rem; margin-bottom: 1.5rem;">لا يوجد مراجع حالياً</h3>
+
+      <button id="callNextBtn" class="btn-submit" style="max-width: 280px;">
+        مناداة التالي ❯
+      </button>
+    </div>
+
+    <!-- جدول المراجعين التفاعلي -->
+    <div class="form-card" style="padding: 1.25rem;">
+      <h3 style="font-size: 1.1rem; margin-bottom: 0.5rem;">سجل الزوار اليوم</h3>
+      <div style="overflow-x: auto; width: 100%;">
+        <table>
+          <thead>
+            <tr>
+              <th>الرقم</th>
+              <th>الاسم</th>
+              <th>رقم الجوال</th>
+              <th>الحالة</th>
+            </tr>
+          </thead>
+          <tbody id="visitorsTable">
+            <tr>
+              <td colspan="4" style="text-align: center; color: var(--text-muted);">جاري تحميل البيانات...</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+
+  <script src="config.js"></script>
+  <script>
+    const nextBtn = document.getElementById("callNextBtn");
+
+    async function fetchAdminData() {
+      try {
+        const res = await fetch(`${CONFIG.API_URL}?action=getStatus`);
+        const data = await res.json();
+
+        if (data.status === "success") {
+          // تحديث بيانات المراجع الحالي
+          if (data.currentServing) {
+            document.getElementById("adminServingTicket").innerText = data.currentServing.ticket;
+            document.getElementById("adminServingName").innerText = `${data.currentServing.name} (${data.currentServing.phone})`;
+          } else {
+            document.getElementById("adminServingTicket").innerText = "--";
+            document.getElementById("adminServingName").innerText = "لا يوجد مراجع حالياً";
+          }
+
+          // بناء جدول الزوار
+          const tbody = document.getElementById("visitorsTable");
+          tbody.innerHTML = "";
+
+          if (data.visitors.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="4" style="text-align: center;">لا توجد طلبات حتى الآن</td></tr>`;
+            return;
+          }
+
+          data.visitors.forEach((v) => {
+            let bClass = "badge-waiting";
+            if (v.status === "قيد المقابلة") bClass = "badge-calling";
+            if (v.status === "منتهي") bClass = "badge-completed";
+
+            const row = document.createElement("tr");
+            row.innerHTML = `
+              <td><strong>#${v.ticket}</strong></td>
+              <td>${v.name}</td>
+              <td style="font-family: monospace;">${v.phone}</td>
+              <td><span class="badge ${bClass}">${v.status}</span></td>
+            `;
+            tbody.appendChild(row);
+          });
+        }
+      } catch (e) {
+        console.error("فشل الجلب الدوري للموظف", e);
+      }
+    }
+
+    nextBtn.addEventListener("click", async () => {
+      nextBtn.disabled = true;
+      nextBtn.innerText = "جاري الاستدعاء...";
+      try {
+        await fetch(CONFIG.API_URL, {
+          method: "POST",
+          body: JSON.stringify({ action: "next" })
+        });
+        await fetchAdminData();
+      } catch (e) {
+        alert("تعذر الانتقال للتالي");
+      } finally {
+        nextBtn.disabled = false;
+        nextBtn.innerText = "مناداة التالي ❯";
+      }
+    });
+
+    fetchAdminData();
+    setInterval(fetchAdminData, CONFIG.POLL_INTERVAL);
+  </script>
+</body>
+</html>
