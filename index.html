@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>HAJIB SOFT </title>
+  <title>تذكرتك الذكية</title>
   <link rel="stylesheet" href="style.css">
   <!-- مكتبة Supabase الرسمية -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -16,21 +16,20 @@
     <div class="current-serving-bar">
       <div class="current-label">
         <span class="pulse-dot"></span>
-        <span>الرقم الآن</span>
+        <span>المنادى عليه الآن</span>
       </div>
       <div class="current-number-badge" id="topCurrentNumber">--</div>
     </div>
 
     <!-- تنبيه مرئي وصوتي فوري عند وصول الدور -->
     <div id="turnAlert" class="turn-alert-banner">
-      🔔 حان دورك الآن! يرجى التوجه لغرفة المقابلة بهدوء
+      🔔 حان دورك الآن! يرجى التوجه لغرفة المقابلة فوراً
     </div>
 
     <!-- بطاقة التسجيل (الاسم ثم الجوال) -->
     <div class="form-card" id="formSection">
       <h2 style="font-size: 1.35rem; margin-bottom: 0.35rem; font-weight: 700;">تسجيل حضور موعد</h2>
       <p style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 1.5rem;">أدخل البيانات لإصدار رقم الانتظار الخاص بك</p>
- <p style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 1.5rem;">يجب ان تكون هويتك سارية للدخول للمقابلة </p>
 
       <form id="checkinForm">
         <div class="field-group">
@@ -49,7 +48,7 @@
 
     <!-- بطاقة التذكرة الرقمية: تظهر التذكرة في المنتصف برقم ضخم جداً -->
     <div class="ticket-card" id="ticketSection" style="display: none;">
-      <span class="ticket-tag">رقمك هو</span>
+      <span class="ticket-tag">رقم الدخول الخاص بك</span>
       <div class="visitor-huge-number" id="myTicketNumber">--</div>
       
       <div class="visitor-info-box">
@@ -106,6 +105,7 @@
     }
 
     // تسجيل زائر جديد وحفظه فورياً
+   // تسجيل زائر جديد وحساب الرقم تلقائياً بناءً على الجلسة الحالية
     document.getElementById("checkinForm").addEventListener("submit", async (e) => {
       e.preventDefault();
       const btn = document.getElementById("submitBtn");
@@ -116,9 +116,23 @@
       btn.innerText = "جاري الإصدار الفوري...";
 
       try {
+        // 1. حساب عدد الزوار في الجلسة الحالية غير المؤرشفين
+        const { count, error: countErr } = await db
+          .from('visitors')
+          .select('*', { count: 'exact', head: true })
+          .neq('status', 'archived');
+
+        const nextTicketNumber = (count || 0) + 1; // إذا كانت القائمة فارغة أو مصفّرة يبدأ من 1
+
+        // 2. إدراج الزائر بالرقم الجديد
         const { data, error } = await db
           .from('visitors')
-          .insert([{ name: name, phone: phone, status: 'waiting' }])
+          .insert([{ 
+            ticket_number: nextTicketNumber, 
+            name: name, 
+            phone: phone, 
+            status: 'waiting' 
+          }])
           .select()
           .single();
 
