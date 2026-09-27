@@ -47,15 +47,15 @@
     
     <!-- زر تبديل أو معاينة شاشة الزائر -->
     <div style="display: flex; justify-content: space-between; align-items: center;">
-      <h2 style="font-size: 1.25rem; font-weight: 800;">لوحة استدعاء المراجعين</h2>
+      <h2 style="font-size: 1.25rem; font-weight: 800;">استدعاء المتقدمين للمقابلة  </h2>
       <a href="index.html" style="font-size: 0.85rem; color: var(--primary); text-decoration: none; font-weight: 600;">صفحة الزائر ↗</a>
     </div>
 
     <!-- بطاقة المناداة للزائر التالي -->
     <div class="ticket-card">
-      <span class="ticket-tag">المراجع الحالي قيد المقابلة</span>
+      <span class="ticket-tag">   الرقم الحالي</span>
       <div class="visitor-huge-number" id="adminServingTicket">--</div>
-      <h3 id="adminServingName" style="color: var(--text-muted); font-size: 1.2rem; margin-bottom: 1.5rem;">لا يوجد مراجع حالياً</h3>
+      <h3 id="adminServingName" style="color: var(--text-muted); font-size: 1.2rem; margin-bottom: 1.5rem;">لايوجد شخص حالياً</h3>
 
       <button id="callNextBtn" class="btn-submit" style="max-width: 280px;">
         مناداة التالي ❯
@@ -64,7 +64,7 @@
 
     <!-- جدول المراجعين التفاعلي -->
     <div class="form-card" style="padding: 1.25rem;">
-      <h3 style="font-size: 1.1rem; margin-bottom: 0.5rem;">سجل الزوار اليوم</h3>
+      <h3 style="font-size: 1.1rem; margin-bottom: 0.5rem;">سجل المتقدمين اليوم</h3>
       <div style="overflow-x: auto; width: 100%;">
         <table>
           <thead>
@@ -102,7 +102,7 @@
             document.getElementById("adminServingName").innerText = `${data.currentServing.name} (${data.currentServing.phone})`;
           } else {
             document.getElementById("adminServingTicket").innerText = "--";
-            document.getElementById("adminServingName").innerText = "لا يوجد مراجع حالياً";
+            document.getElementById("adminServingName").innerText = "لا يوجد شخص حالياً";
           }
 
           // بناء جدول الزوار
