@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>تذكرتك الذكية</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="secure-mode">
+
+  <div class="app-container">
+    
+    <!-- 1. الشريط العلوي: الرقم الحالي المنادى عليه بخط أصغر وأنيق -->
+    <div class="current-serving-bar">
+      <div class="current-label">
+        <span class="pulse-dot"></span>
+        <span>المنادى عليه الآن</span>
+      </div>
+      <div class="current-number-badge" id="topCurrentNumber">--</div>
+    </div>
+
+    <!-- تنبيه صوتي ومرئي عند وصول الدور -->
+    <div id="turnAlert" class="turn-alert-banner">
+      🔔 حان دورك الآن! يرجى التوجه لغرفة المقابلة فوراً
+    </div>
+
+    <!-- 2. بطاقة تسجيل البيانات (الاسم ثم الجوال) -->
+    <div class="form-card" id="formSection">
+      <h2 style="font-size: 1.35rem; margin-bottom: 0.35rem; font-weight: 700;">تسجيل حضور موعد</h2>
+      <p style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 1.5rem;">أدخل البيانات لإصدار رقم الانتظار الخاص بك</p>
+
+      <form id="checkinForm">
+        <div class="field-group">
+          <label for="visitorName">الاسم الثلاثي</label>
+          <input type="text" id="visitorName" class="mobile-input" placeholder="اكتب اسمك هنا" required autocomplete="off">
+        </div>
+
+        <div class="field-group">
+          <label for="visitorPhone">رقم الجوال</label>
+          <input type="tel" id="visitorPhone" class="mobile-input" placeholder="05xxxxxxxx" required pattern="[0-9]{9,15}" autocomplete="off">
+        </div>
+
+        <button type="submit" class="btn-submit" id="submitBtn">استلام رقم الموعد</button>
+      </form>
+    </div>
+
+    <!-- 3. بطاقة التذكرة بعد التسجيل (رقم الزائر يظهر بحجم ضخم في المنتصف) -->
+    <div class="ticket-card" id="ticketSection" style="display: none;">
+      <span class="ticket-tag">رقم الدخول الخاص بك</span>
+      
+      <!-- الرقم الضخم جداً -->
+      <div class="visitor-huge-number" id="myTicketNumber">--</div>
+      
+      <div class="visitor-info-box">
+        <h3 id="displayName" style="font-size: 1.25rem; font-weight: 700;">--</h3>
+        <p id="displayPhone" style="color: var(--text-muted); font-size: 0.95rem; margin-top: 0.2rem;"></p>
+      </div>
+      <p style="margin-top: 1rem; font-size: 0.85rem; color: var(--text-muted);">احتفظ بهذه الشاشة مفتوحة حتى يحين موعدك</p>
+    </div>
+
+  </div>
+
+  <!-- حاجز انتهاء المقابلة وحظر الشاشة -->
+  <div id="lockScreen" class="lock-screen">
+    <div style="font-size: 4rem; margin-bottom: 0.5rem;">⏳</div>
+    <h2 style="font-size: 1.6rem; color: #dc2626; margin-bottom: 0.5rem;">انتهت مقابلتك</h2>
+    <p style="color: var(--text-muted); font-size: 0.95rem;">تم إغلاق الجلسة وتأمين بيانات الموعد تلقائياً.</p>
+  </div>
+
+  <script src="config.js"></script>
+  <script src="app.js"></script>
+  <script>
+    applySecurityMeasures();
+
+    // مفتاح الحفظ الموحد
+    const STORAGE_KEY = "kiosk_visitor_state";
+    let isAlertTriggered = false;
+    let interviewCalledTimestamp = null;
+
+    // دالة استرجاع بيانات الزائر (من localStorage أولاً ثم Cookies)
+    function loadSavedSession() {
+      const localData = localStorage.getItem(STORAGE_KEY);
+      if (localData) {
+        try { return JSON.parse(localData); } catch (e) {}
+      }
+      return getCookie(STORAGE_KEY);
+    }
+
+    // دالة حفظ بيانات الزائر بشكل متزامن
+    function saveSession(data) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+      setCookie(STORAGE_KEY, data, 1);
+    }
+
+    let currentVisitor = loadSavedSession();
+
+    // إذا كان مسجلاً مسبقاً، تظهر تذكرته فوراً دون إظهار النموذج
+    if (currentVisitor) {
+      renderTicketUI(currentVisitor.ticket, currentVisitor.name, currentVisitor.phone);
+    }
+
+    function renderTicketUI(ticket, name, phone) {
+      document.getElementById("formSection").style.display = "none";
+      document.getElementById("ticketSection").style.display = "flex";
+      document.getElementById("myTicketNumber").innerText = ticket;
+      document.getElementById("displayName").innerText = name;
+      document.getElementById("displayPhone").innerText = phone;
+    }
+
+    // معالجة نموذج التسجيل
+    document.getElementById("checkinForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const btn = document.getElementById("submitBtn");
+      const name = document.getElementById("visitorName").value.trim();
+      const phone = document.getElementById("visitorPhone").value.trim();
+
+      btn.disabled = true;
+      btn.innerText = "جاري الإصدار...";
+
+      try {
+        const res = await fetch(CONFIG.API_URL, {
+          method: "POST",
+          body: JSON.stringify({ action: "register", name: name, phone: phone })
+        });
+        const result = await res.json();
+
+        if (result.status === "success") {
+          currentVisitor = { ticket: result.ticket, name: result.name, phone: result.phone };
+          saveSession(currentVisitor);
+          renderTicketUI(result.ticket, result.name, result.phone);
+        }
+      } catch (err) {
+        alert("تعذر الاتصال بقاعدة البيانات. تحقق من اتصال الإنترنت.");
+      } finally {
+        btn.disabled = false;
+        btn.innerText = "استلام رقم الموعد";
+      }
+    });
+
+    // تحديث الرقم الحالي في الأعلى وفحص الدور تلقائياً
+    async function syncQueue() {
+      try {
+        const res = await fetch(`${CONFIG.API_URL}?action=getStatus`);
+        const data = await res.json();
+
+        if (data.status === "success") {
+          const current = data.currentServing;
+          const currentNum = current ? current.ticket : "--";
+          
+          // عرض الرقم الحالي في الشريط العلوي بخط أصغر
+          document.getElementById("topCurrentNumber").innerText = `#${currentNum}`;
+
+          // التحقق إذا حان دور الزائر الحالي
+          if (currentVisitor && current && String(current.ticket) === String(currentVisitor.ticket)) {
+            if (!isAlertTriggered) {
+              isAlertTriggered = true;
+              playNotificationSound();
+              document.getElementById("turnAlert").style.display = "block";
+              interviewCalledTimestamp = Date.now();
+            }
+
+            // فحص مهلة الدقيقتين (120,000ms)
+            if (interviewCalledTimestamp && (Date.now() - interviewCalledTimestamp >= CONFIG.INTERVIEW_TIMEOUT_MS)) {
+              document.getElementById("lockScreen").style.display = "flex";
+              document.body.classList.add("blurred");
+            }
+          }
+        }
+      } catch (err) {
+        console.warn("جاري إعادة محاولة المزامنة...");
+      }
+    }
+
+    syncQueue();
+    setInterval(syncQueue, CONFIG.POLL_INTERVAL);
+  </script>
+</body>
+</html>
