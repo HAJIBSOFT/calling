@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>تذكرتك الذكية</title>
+  <title>HAJIB SOFT</title>
   <link rel="stylesheet" href="style.css">
   <!-- مكتبة Supabase الرسمية -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -16,20 +16,21 @@
     <div class="current-serving-bar">
       <div class="current-label">
         <span class="pulse-dot"></span>
-        <span>المنادى عليه الآن</span>
+        <span>الرقم الان</span>
       </div>
       <div class="current-number-badge" id="topCurrentNumber">--</div>
     </div>
 
     <!-- تنبيه مرئي وصوتي فوري عند وصول الدور -->
     <div id="turnAlert" class="turn-alert-banner">
-      🔔 حان دورك الآن! يرجى التوجه لغرفة المقابلة فوراً
+      🔔 حان دورك الآن! يرجى التوجه لغرفة المقابلة بهدوء
     </div>
 
     <!-- بطاقة التسجيل (الاسم ثم الجوال) -->
     <div class="form-card" id="formSection">
       <h2 style="font-size: 1.35rem; margin-bottom: 0.35rem; font-weight: 700;">تسجيل حضور موعد</h2>
       <p style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 1.5rem;">أدخل البيانات لإصدار رقم الانتظار الخاص بك</p>
+      <p style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 1.5rem;">لاتستطيع الدخول للمقابله اذا كانت هويتك منتهية</p>
 
       <form id="checkinForm">
         <div class="field-group">
@@ -48,14 +49,14 @@
 
     <!-- بطاقة التذكرة الرقمية: تظهر التذكرة في المنتصف برقم ضخم جداً -->
     <div class="ticket-card" id="ticketSection" style="display: none;">
-      <span class="ticket-tag">رقم الدخول الخاص بك</span>
+      <span class="ticket-tag">رقمك هو</span>
       <div class="visitor-huge-number" id="myTicketNumber">--</div>
       
       <div class="visitor-info-box">
         <h3 id="displayName" style="font-size: 1.25rem; font-weight: 700;">--</h3>
         <p id="displayPhone" style="color: var(--text-muted); font-size: 0.95rem; margin-top: 0.2rem;"></p>
       </div>
-      <p style="margin-top: 1rem; font-size: 0.85rem; color: var(--text-muted);">احتفظ بهذه الشاشة مفتوحة حتى يحين موعدك</p>
+      <p style="margin-top: 1rem; font-size: 0.85rem; color: var(--text-muted);">احتفظ بهذه الشاشة مفتوحة حتى يحين موعدك ..نتمنى لك كل التوفيق </p>
     </div>
 
   </div>
