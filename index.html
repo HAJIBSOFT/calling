@@ -172,8 +172,19 @@
       }
     }
 
-    syncQueue();
-    setInterval(syncQueue, CONFIG.POLL_INTERVAL);
+    
+  //  setInterval(syncQueue, CONFIG.POLL_INTERVAL);
+    
+    // ✅ يبقى هذا فقط (يقرأ البيانات مرة واحدة عند فتح الصفحة):
+checkCurrentServing();
+
+// ✅ وهذا الكود هو البديل الذكي المجاني (لا يستهلك أي طلبات إلا إذا ضغط الموظف على التالي):
+db.channel('public:visitors')
+  .on('postgres_changes', { event: '*', schema: 'public', table: 'visitors' }, () => {
+    checkCurrentServing();
+  })
+  .subscribe();
+    
   </script>
 </body>
 </html>
