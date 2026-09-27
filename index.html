@@ -16,20 +16,21 @@
     <div class="current-serving-bar">
       <div class="current-label">
         <span class="pulse-dot"></span>
-        <span>المنادى عليه الآن</span>
+        <span>الرقم الآن</span>
       </div>
       <div class="current-number-badge" id="topCurrentNumber">--</div>
     </div>
 
     <!-- تنبيه مرئي وصوتي فوري عند وصول الدور -->
     <div id="turnAlert" class="turn-alert-banner">
-      🔔 حان دورك الآن! يرجى التوجه لغرفة المقابلة فوراً
+      🔔 حان دورك الآن! يرجى التوجه لغرفة المقابلة بهدوء
     </div>
 
     <!-- بطاقة التسجيل (الاسم ثم الجوال) -->
     <div class="form-card" id="formSection">
       <h2 style="font-size: 1.35rem; margin-bottom: 0.35rem; font-weight: 700;">تسجيل حضور موعد</h2>
       <p style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 1.5rem;">أدخل البيانات لإصدار رقم الانتظار الخاص بك</p>
+ <p style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 1.5rem;">يجب ان تكون هويتك سارية للدخول للمقابلة </p>
 
       <form id="checkinForm">
         <div class="field-group">
@@ -48,7 +49,7 @@
 
     <!-- بطاقة التذكرة الرقمية: تظهر التذكرة في المنتصف برقم ضخم جداً -->
     <div class="ticket-card" id="ticketSection" style="display: none;">
-      <span class="ticket-tag">رقم الدخول الخاص بك</span>
+      <span class="ticket-tag">رقمك هو</span>
       <div class="visitor-huge-number" id="myTicketNumber">--</div>
       
       <div class="visitor-info-box">
